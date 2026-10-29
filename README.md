@@ -1,6 +1,6 @@
 # 🐭 SprachMaus (Windows)
 
-Ein smarter Windows-Schreibassistent für Nicht-Muttersprachler. Verbessert E-Mails, Chats und Dokumente in Echtzeit per Tastenkürzel (`Alt + S`).
+Ein smarter Windows-Schreibassistent für Nicht-Muttersprachler. Verbessert E-Mails, Chats und Dokumente in Echtzeit per Tastenkürzel (`Strg + Alt + S`).
 
 ---
 
@@ -27,7 +27,7 @@ Ein smarter Windows-Schreibassistent für Nicht-Muttersprachler. Verbessert E-Ma
 2. Erstelle eine Datei namens `.env` im Hauptverzeichnis (oder kopiere `.env.example` nach `.env`):
    ```env
    GEMINI_API_KEY=dein_echter_api_key_hier
-   HOTKEY=<alt>+s
+   HOTKEY=<ctrl>+<alt>+s
    ```
 
 ### 2. SprachMaus starten
@@ -39,7 +39,7 @@ Ein smarter Windows-Schreibassistent für Nicht-Muttersprachler. Verbessert E-Ma
 1. Öffne ein beliebiges Programm (Word, Editor, Teams, Browser).
 2. Markiere einen fehlerhaften Satz, z. B.:
    > *"Ich habe gestern geschickt das E-Mail an der Chef, aber er hat nicht geantwortet."*
-3. Drücke **`Alt + S`**.
+3. Drücke **`Strg + Alt + S`** (oder dein konfiguriertes Kürzel).
 4. Wähle mit Taste `1`, `2`, `3` oder `4` deinen Wunschsatz aus – fertig!
 
 ---
@@ -48,3 +48,4 @@ Ein smarter Windows-Schreibassistent für Nicht-Muttersprachler. Verbessert E-Ma
 - Lokale Handy-Style Live-Autokorrektur (symspell) ohne Cloud-Verzögerung.
 - Einstellungsmenü im Tray-Icon.
 - Standalone `.exe` ohne Python-Installation.
+

@@ -31,9 +31,9 @@ class TrayIcon(QSystemTrayIcon):
     trigger_test = Signal()
     quit_requested = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, hotkey_display: str = "Strg+Alt+S", parent=None):
         super().__init__(create_mouse_icon(), parent)
-        self.setToolTip("SprachMaus – Dein KI-Schreibassistent (Alt+S)")
+        self.setToolTip(f"SprachMaus – Dein KI-Schreibassistent ({hotkey_display})")
 
         menu = QMenu()
         menu.setStyleSheet("""
@@ -66,3 +66,4 @@ class TrayIcon(QSystemTrayIcon):
         quit_action.triggered.connect(self.quit_requested.emit)
 
         self.setContextMenu(menu)
+

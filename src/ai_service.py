@@ -77,3 +77,4 @@ class AIService:
             english=data.get("english", ""),
             explanation=data.get("explanation", "Grammatik und Rechtschreibung angepasst."),
         )
+

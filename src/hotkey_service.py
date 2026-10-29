@@ -26,3 +26,4 @@ class HotkeyListener(QObject):
     def stop(self):
         if self._listener:
             self._listener.stop()
+

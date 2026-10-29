@@ -26,12 +26,24 @@ class AIWorker(QThread):
             self.error.emit(str(e))
 
 
+def format_hotkey_for_display(hotkey_str: str) -> str:
+    return (
+        hotkey_str.replace("<ctrl>", "Strg")
+        .replace("<alt>", "Alt")
+        .replace("<shift>", "Shift")
+        .replace("<cmd>", "Win")
+        .replace("+", " + ")
+        .upper()
+    )
+
+
 class SprachMausApp(QObject):
     def __init__(self):
         super().__init__()
         self.ai_service = AIService()
         self.overlay = OverlayWindow()
-        self.tray = TrayIcon()
+        self.hotkey_display = format_hotkey_for_display(HOTKEY)
+        self.tray = TrayIcon(self.hotkey_display)
         self.hotkey = HotkeyListener(HOTKEY)
 
         self._current_worker: AIWorker | None = None
@@ -47,7 +59,7 @@ class SprachMausApp(QObject):
         self.hotkey.start()
         self.tray.showMessage(
             "SprachMaus läuft",
-            f"Markiere Text und drücke {HOTKEY}, um Vorschläge zu sehen.",
+            f"Markiere Text und drücke {self.hotkey_display}, um Vorschläge zu sehen.",
             TrayIcon.MessageIcon.Information,
             3000
         )
@@ -99,3 +111,4 @@ class SprachMausApp(QObject):
     def _handle_quit(self):
         self.hotkey.stop()
         QApplication.quit()
+

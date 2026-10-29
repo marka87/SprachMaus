@@ -62,3 +62,4 @@ class ClipboardService:
         with keyboard.pressed(Key.ctrl):
             keyboard.press('v')
             keyboard.release('v')
+

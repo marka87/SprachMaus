@@ -226,3 +226,4 @@ class OverlayWindow(QWidget):
             y = max(screen.top(), cursor_pos.y() - self.height() - 10)
 
         self.move(x, y)
+
