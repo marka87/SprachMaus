@@ -1,10 +1,10 @@
 from typing import Optional
-from PySide6.QtCore import Qt, Signal, QPoint
+from PySide6.QtCore import Qt, Signal, QPoint, QSettings
 from PySide6.QtGui import QCursor, QKeyEvent, QMouseEvent
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QFrame, QGraphicsDropShadowEffect, QProgressBar,
-    QScrollArea
+    QScrollArea, QSizeGrip
 )
 from src.ai_service import ImprovementResult
 
@@ -19,11 +19,11 @@ class SuggestionCard(QFrame):
         self.setObjectName("SuggestionCard")
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 8, 10, 8)
-        layout.setSpacing(3)
+        layout.setContentsMargins(12, 9, 12, 9)
+        layout.setSpacing(4)
 
         header = QHBoxLayout()
-        header.setSpacing(6)
+        header.setSpacing(8)
 
         # Shortcut badge (e.g. "[1]")
         key_lbl = QLabel(f"[{key_shortcut}]")
@@ -45,7 +45,7 @@ class SuggestionCard(QFrame):
         # Content text
         self.content_lbl = QLabel(text)
         self.content_lbl.setWordWrap(True)
-        self.content_lbl.setStyleSheet("color: #f8fafc; font-size: 12px; line-height: 1.3;")
+        self.content_lbl.setStyleSheet("color: #f8fafc; font-size: 13px; line-height: 1.35;")
         layout.addWidget(self.content_lbl)
 
         self.setStyleSheet("""
@@ -70,13 +70,23 @@ class OverlayWindow(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.settings = QSettings("SprachMaus", "UI")
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
             | Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedWidth(480)
+
+        # Gespeicherte Größe laden (Standardbreite: 580px, damit Karten nicht umbrechen)
+        saved_w = self.settings.value("window_width", 580, type=int)
+        saved_h = self.settings.value("window_height", 0, type=int)
+        self.user_custom_width = max(420, saved_w)
+        self.user_custom_height = saved_h if saved_h > 150 else 0
+
+        self.setMinimumWidth(400)
+        self.setMinimumHeight(150)
+        self.resize(self.user_custom_width, 200)
 
         self.cards: list[SuggestionCard] = []
         self._drag_pos: Optional[QPoint] = None
@@ -102,7 +112,7 @@ class OverlayWindow(QWidget):
         self.container.setGraphicsEffect(shadow)
 
         self.inner_layout = QVBoxLayout(self.container)
-        self.inner_layout.setContentsMargins(12, 10, 12, 10)
+        self.inner_layout.setContentsMargins(14, 12, 14, 8)
         self.inner_layout.setSpacing(6)
 
         # Title bar (draggable)
@@ -114,7 +124,7 @@ class OverlayWindow(QWidget):
         title.setStyleSheet("color: #38bdf8; font-weight: bold; font-size: 13px;")
         title_layout.addWidget(title)
 
-        hint = QLabel("Taste [1-4] oder [Esc] zum Schließen")
+        hint = QLabel("Taste [1-4] oder [Esc] | Größe an Ecke unten rechts anpassbar ↘")
         hint.setStyleSheet("color: #64748b; font-size: 10px;")
         title_layout.addStretch()
         title_layout.addWidget(hint)
@@ -124,7 +134,6 @@ class OverlayWindow(QWidget):
         self.orig_lbl = QLabel("")
         self.orig_lbl.setStyleSheet("color: #94a3b8; font-size: 11px; font-style: italic;")
         self.orig_lbl.setWordWrap(True)
-        self.orig_lbl.setMaximumHeight(36)
         self.inner_layout.addWidget(self.orig_lbl)
 
         # Explanation badge
@@ -132,7 +141,7 @@ class OverlayWindow(QWidget):
         self.explanation_lbl.setStyleSheet("""
             background-color: #172554;
             color: #93c5fd;
-            padding: 4px 8px;
+            padding: 5px 9px;
             border-radius: 5px;
             font-size: 11px;
             font-weight: 500;
@@ -158,7 +167,7 @@ class OverlayWindow(QWidget):
         """)
         self.inner_layout.addWidget(self.progress)
 
-        # Scroll area for suggestions (so it never overflows screen height)
+        # Scroll area for suggestions (so everything is visible without forced scroll)
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QFrame.Shape.NoFrame)
@@ -183,6 +192,24 @@ class OverlayWindow(QWidget):
         self.scroll.setWidget(self.scroll_content)
 
         self.inner_layout.addWidget(self.scroll)
+
+        # Footer mit SizeGrip zum freien Verändern der Fenstergröße
+        footer_layout = QHBoxLayout()
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addStretch()
+
+        self.size_grip = QSizeGrip(self)
+        self.size_grip.setFixedSize(16, 16)
+        self.size_grip.setStyleSheet("""
+            QSizeGrip {
+                width: 16px;
+                height: 16px;
+                image: none;
+            }
+        """)
+        footer_layout.addWidget(self.size_grip)
+        self.inner_layout.addLayout(footer_layout)
+
         outer_layout.addWidget(self.container)
 
     def show_loading(self, original_text: str):
@@ -192,14 +219,15 @@ class OverlayWindow(QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
-        preview = original_text if len(original_text) <= 70 else original_text[:67] + "..."
+        preview = original_text if len(original_text) <= 80 else original_text[:77] + "..."
         self.orig_lbl.setText(f'Original: "{preview}"')
         self.explanation_lbl.setText("💡 SprachMaus denkt nach...")
         self.progress.setVisible(True)
         self.scroll.setVisible(False)
 
-        self.adjustSize()
-        self._position_smart(estimated_height=140)
+        loading_height = 150
+        self.resize(self.user_custom_width, loading_height)
+        self._position_smart(target_height=loading_height)
         self.show()
         self.raise_()
         self.activateWindow()
@@ -223,31 +251,36 @@ class OverlayWindow(QWidget):
             self.cards.append(card)
             self.suggestions_layout.addWidget(card)
 
-        # Compact height calculation
+        # Höhe so berechnen, dass alle Karten ohne Scrollbalken Platz haben
         screen = self.screen().availableGeometry()
-        max_height = min(460, screen.height() - 80)
-        self.scroll.setMaximumHeight(max_height - 130)
+        cards_height = len(items) * 68 + 140
 
-        self.adjustSize()
-        self._position_smart()
+        if self.user_custom_height > 0:
+            target_height = min(self.user_custom_height, screen.height() - 60)
+        else:
+            # Automatisch alle Karten vollständig anzeigen (ohne Scrollen!)
+            target_height = min(cards_height, screen.height() - 80)
 
-    def _position_smart(self, estimated_height: Optional[int] = None):
+        self.resize(self.user_custom_width, target_height)
+        self._position_smart(target_height=target_height)
+
+    def _position_smart(self, target_height: Optional[int] = None):
         cursor_pos = QCursor.pos()
         screen = self.screen().availableGeometry()
 
-        win_width = self.width() if self.width() > 0 else 480
-        win_height = estimated_height or max(self.sizeHint().height(), self.height())
+        win_width = self.width()
+        win_height = target_height or self.height()
 
         x = cursor_pos.x() + 10
 
-        # Wenn der Cursor in der unteren Bildschirmhälfte ist (z.B. Teams/Outlook Chat unten):
-        # Zeige das Fenster OBERHALB des Cursors, damit die Hebel/Optionen voll sichtbar sind!
-        if cursor_pos.y() > (screen.top() + screen.height() * 0.55):
+        # Wenn der Cursor im unteren Teil des Bildschirms ist (> 50%):
+        # Zeige das Fenster oberhalb des Cursors, damit alle Optionen sichtbar sind!
+        if cursor_pos.y() > (screen.top() + screen.height() * 0.50):
             y = cursor_pos.y() - win_height - 15
         else:
             y = cursor_pos.y() + 25
 
-        # Sicherstellen, dass das Fenster immer innerhalb des sichtbaren Bildschirms bleibt
+        # Im sichtbaren Bildschirmbereich halten
         if x + win_width > screen.right() - 10:
             x = screen.right() - win_width - 10
         if x < screen.left() + 10:
@@ -292,3 +325,12 @@ class OverlayWindow(QWidget):
 
     def mouseReleaseEvent(self, event: QMouseEvent):
         self._drag_pos = None
+
+    # Benutzer-Größe merken, wenn an der Ecke gezogen wird
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.isVisible() and len(self.cards) > 0:
+            self.user_custom_width = self.width()
+            self.user_custom_height = self.height()
+            self.settings.setValue("window_width", self.user_custom_width)
+            self.settings.setValue("window_height", self.user_custom_height)
