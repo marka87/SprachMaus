@@ -36,7 +36,7 @@ Ein intelligenter Schreibassistent für Windows, der Nicht-Muttersprachlern beim
 - [x] **1.4 Modernes Floating-Overlay (UI)**
   - [x] Randloses, modernes Schwebefenster an Mausposition (Dark Fluent UI)
   - [x] Vorschläge mit Tastatur-Navigation (Tasten `1-4` oder Klick zum Übernehmen)
-  - [x] Schnelles Einfügen (`Ctrl+V` ins Zielfenster)
+  - [x] Schnelles Einfügen (`Ctrl+V` ins Zielfenster)Es funktioniert sehr gut. Wie sollen wir weitergehen?
 - [x] **1.5 System-Tray Icon**
   - [x] Icon im Windows-Infobereich (Tray) mit Schnelltest & Beenden
 
