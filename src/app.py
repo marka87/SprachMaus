@@ -10,20 +10,21 @@ from src.ui.tray_icon import TrayIcon
 
 
 class AIWorker(QThread):
-    finished = Signal(object)
-    error = Signal(str)
+    # Eigener Name: "finished" würde das Thread-Ende-Signal von QThread verdecken
+    done = Signal(object, object)
+    error = Signal(object, str)
 
-    def __init__(self, ai_service: AIService, text: str):
-        super().__init__()
+    def __init__(self, ai_service: AIService, text: str, parent=None):
+        super().__init__(parent)
         self.ai_service = ai_service
         self.text = text
 
     def run(self):
         try:
             result = self.ai_service.improve_text(self.text)
-            self.finished.emit(result)
+            self.done.emit(self, result)
         except Exception as e:
-            self.error.emit(str(e))
+            self.error.emit(self, str(e))
 
 
 def format_hotkey_for_display(hotkey_str: str) -> str:
@@ -85,18 +86,21 @@ class SprachMausApp(QObject):
     def _process_text(self, text: str):
         self.overlay.show_loading(text)
 
-        if self._current_worker and self._current_worker.isRunning():
-            self._current_worker.terminate()
+        # Ältere Anfragen laufen zu Ende, ihr Ergebnis wird verworfen (terminate() ist unsicher)
+        worker = AIWorker(self.ai_service, text, self)
+        worker.done.connect(self._on_ai_success)
+        worker.error.connect(self._on_ai_error)
+        worker.finished.connect(worker.deleteLater)
+        self._current_worker = worker
+        worker.start()
 
-        self._worker = AIWorker(self.ai_service, text)
-        self._worker.finished.connect(self._on_ai_success)
-        self._worker.error.connect(self._on_ai_error)
-        self._worker.start()
+    def _on_ai_success(self, worker: AIWorker, result: ImprovementResult):
+        if worker is self._current_worker:
+            self.overlay.show_results(result)
 
-    def _on_ai_success(self, result: ImprovementResult):
-        self.overlay.show_results(result)
-
-    def _on_ai_error(self, err_msg: str):
+    def _on_ai_error(self, worker: AIWorker, err_msg: str):
+        if worker is not self._current_worker:
+            return
         self.overlay.hide()
         self.tray.showMessage(
             "Fehler bei KI-Korrektur",

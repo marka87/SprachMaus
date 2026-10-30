@@ -299,16 +299,11 @@ class OverlayWindow(QWidget):
 
     def keyPressEvent(self, event: QKeyEvent):
         key = event.key()
+        index = key - Qt.Key.Key_1.value
         if key == Qt.Key.Key_Escape:
             self.hide()
-        elif key == Qt.Key.Key_1 and len(self.cards) >= 1:
-            self._on_card_clicked(self.cards[0].text_content)
-        elif key == Qt.Key.Key_2 and len(self.cards) >= 2:
-            self._on_card_clicked(self.cards[1].text_content)
-        elif key == Qt.Key.Key_3 and len(self.cards) >= 3:
-            self._on_card_clicked(self.cards[2].text_content)
-        elif key == Qt.Key.Key_4 and len(self.cards) >= 4:
-            self._on_card_clicked(self.cards[3].text_content)
+        elif 0 <= index < len(self.cards):
+            self._on_card_clicked(self.cards[index].text_content)
         else:
             super().keyPressEvent(event)
 

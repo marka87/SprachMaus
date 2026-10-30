@@ -23,6 +23,21 @@ class TestAIService(unittest.TestCase):
         self.assertIn("mit dem Auto", res.explanation)
         self.assertEqual(res.english, "I am driving by car to the office.")
 
+    def test_null_fields_fall_back(self):
+        service = AIService(api_key="mock_key")
+        service._client = MagicMock()
+        service._client.models.generate_content.return_value.text = '{"corrected": null, "english": null}'
+
+        res = service.improve_text("Hallo Welt")
+        self.assertEqual(res.corrected, "Hallo Welt")
+        self.assertEqual(res.english, "")
+
+    def test_missing_key_fails_clearly(self):
+        service = AIService(api_key="")
+        service.api_key = ""
+        with self.assertRaisesRegex(ValueError, "GEMINI_API_KEY"):
+            service.improve_text("Hallo")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -23,6 +23,10 @@ class ClipboardService:
         except Exception:
             pass
 
+        # Alt/Shift vom Hotkey sind noch gedrückt, sonst käme Strg+Alt+C an (in Word z. B. ©)
+        for mod in (Key.alt_l, Key.alt_r, Key.shift):
+            keyboard.release(mod)
+
         # Strg + C simulieren
         with keyboard.pressed(Key.ctrl):
             keyboard.press('c')

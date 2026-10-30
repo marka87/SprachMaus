@@ -69,10 +69,11 @@ class AIService:
             if fb not in candidates:
                 candidates.append(fb)
 
+        client = self.client  # fehlender Schlüssel: klare Meldung statt drei Modell-Fehlversuchen
         last_error = None
         for model_name in candidates:
             try:
-                response = self.client.models.generate_content(
+                response = client.models.generate_content(
                     model=model_name,
                     contents=f"Bitte korrigiere und verbessere diesen Text:\n\n{trimmed}",
                     config=types.GenerateContentConfig(
@@ -87,11 +88,12 @@ class AIService:
 
                 return ImprovementResult(
                     original=trimmed,
-                    corrected=data.get("corrected", trimmed),
-                    formal=data.get("formal", trimmed),
-                    casual=data.get("casual", trimmed),
-                    english=data.get("english", ""),
-                    explanation=data.get("explanation", "Grammatik und Rechtschreibung angepasst."),
+                    # "or": das Modell liefert manchmal null statt eines Felds
+                    corrected=data.get("corrected") or trimmed,
+                    formal=data.get("formal") or trimmed,
+                    casual=data.get("casual") or trimmed,
+                    english=data.get("english") or "",
+                    explanation=data.get("explanation") or "Grammatik und Rechtschreibung angepasst.",
                 )
             except Exception as e:
                 last_error = e
