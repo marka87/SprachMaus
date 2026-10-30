@@ -48,6 +48,6 @@ Gespeichert wird in `%APPDATA%\SprachMaus\settings.env`. Beim ersten Start ohne 
 ```powershell
 .\.venv\Scripts\python main.py          # aus dem Quellcode starten
 .\.venv\Scripts\python -m pytest -q     # Tests
-.\.venv\Scripts\pyinstaller --noconfirm --onefile --windowed --name SprachMaus --exclude-module PySide6.QtWebEngineCore --exclude-module PySide6.QtWebEngineWidgets --exclude-module PySide6.QtPdf main.py
+.\.venv\Scripts\pyinstaller --noconfirm --onefile --windowed --name SprachMaus --icon assets/sprachmaus.ico --exclude-module PySide6.QtWebEngineCore --exclude-module PySide6.QtWebEngineWidgets --exclude-module PySide6.QtPdf main.py
 ```
 
