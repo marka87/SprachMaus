@@ -22,18 +22,15 @@ Ein smarter Windows-Schreibassistent für Nicht-Muttersprachler. Verbessert E-Ma
 
 ## 🚀 Schnellstart
 
-### 1. API-Schlüssel einrichten
-1. Erstelle dir kostenlos einen Gemini API-Schlüssel auf [Google AI Studio](https://aistudio.google.com/apikey).
-2. Erstelle eine Datei namens `.env` im Hauptverzeichnis (oder kopiere `.env.example` nach `.env`):
-   ```env
-   GEMINI_API_KEY=dein_echter_api_key_hier
-   HOTKEY=<ctrl>+<alt>+s
-   ```
+### 1. Starten
+Doppelklick auf `dist\SprachMaus.exe` (kein Python, keine Admin-Rechte nötig). Die 🐭 erscheint im Infobereich der Taskleiste.
 
-### 2. SprachMaus starten
-```powershell
-.\.venv\Scripts\python main.py
-```
+### 2. Einstellungen (Rechtsklick auf die 🐭 → *Einstellungen …*)
+- **Tastenkürzel** per Ausklappmenü (z. B. `Strg + Alt` + `S`). Das Fenster zeigt sofort, ob das Kürzel frei ist. Windows fängt es ab, das aktive Programm (Outlook, Teams …) bekommt es nicht zu sehen.
+- **API-Schlüssel** – kostenlos bei [Google AI Studio](https://aistudio.google.com/apikey).
+- **KI-Modell** und **Mit Windows starten**.
+
+Gespeichert wird in `%APPDATA%\SprachMaus\settings.env`. Beim ersten Start ohne Schlüssel öffnen sich die Einstellungen von selbst.
 
 ### 3. Ausprobieren
 1. Öffne ein beliebiges Programm (Word, Editor, Teams, Browser).
@@ -46,6 +43,11 @@ Ein smarter Windows-Schreibassistent für Nicht-Muttersprachler. Verbessert E-Ma
 
 ## 🛠️ Geplante Erweiterungen (siehe [TASKS.md](TASKS.md))
 - Lokale Handy-Style Live-Autokorrektur (symspell) ohne Cloud-Verzögerung.
-- Einstellungsmenü im Tray-Icon.
-- Standalone `.exe` ohne Python-Installation.
+
+## 🔧 Entwicklung
+```powershell
+.\.venv\Scripts\python main.py          # aus dem Quellcode starten
+.\.venv\Scripts\python -m pytest -q     # Tests
+.\.venv\Scripts\pyinstaller --noconfirm --onefile --windowed --name SprachMaus --exclude-module PySide6.QtWebEngineCore --exclude-module PySide6.QtWebEngineWidgets --exclude-module PySide6.QtPdf main.py
+```
 

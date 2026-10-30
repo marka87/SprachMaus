@@ -59,13 +59,14 @@ Ein intelligenter Schreibassistent für Windows, der Nicht-Muttersprachlern beim
   - [ ] Vollständige englische Grammatikkorrektur (automatische Spracherkennung)
 - [ ] **3.2 Eigenes Wörterbuch & Firmenjargon**
   - [ ] Wörter/Fachbegriffe zur Ignorierliste hinzufügen
-- [ ] **3.3 Windows-Autostart & Installer**
-  - [ ] Option "Mit Windows starten"
-  - [ ] Standalone `.exe` bauen (PyInstaller / Nuitka)
+- [x] **3.3 Windows-Autostart & Installer**
+  - [x] Option "Mit Windows starten"
+  - [x] Standalone `.exe` bauen (PyInstaller)
+- [x] **3.4 Einstellungsfenster** (Kürzel per Ausklappmenü mit Belegt-Prüfung, API-Schlüssel, Modell, Autostart)
 
 ---
 
 ## 📌 Aktueller Status
 - [x] Phase 1 MVP fertiggestellt und einsatzbereit.
-- [ ] **Nächster Schritt:** Echten Gemini API-Key in `.env` eintragen und im Alltag testen!
+- [ ] **Nächster Schritt:** Im Alltag testen. Offen: Zwischenablage nach dem Ersetzen wiederherstellen.
 

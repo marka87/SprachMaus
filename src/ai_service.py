@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 from google import genai
 from google.genai import types
-from src.config import GEMINI_API_KEY, GEMINI_MODEL
+from src.config import MODELS
 
 
 @dataclass
@@ -37,24 +37,25 @@ Gib das Ergebnis IMMER als gültiges JSON in folgendem Format zurück (ohne Mark
 """
 
 
-FALLBACK_MODELS = [
-    "gemini-3.5-flash-lite",
-    "gemini-3.5-flash",
-    "gemini-flash-latest",
-]
+FALLBACK_MODELS = MODELS
 
 
 class AIService:
-    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
-        self.api_key = api_key or GEMINI_API_KEY
-        self.model = model or GEMINI_MODEL
+    def __init__(self, api_key: str = "", model: str = MODELS[0]):
+        self.api_key = api_key
+        self.model = model
         self._client: Optional[genai.Client] = None
+
+    def configure(self, api_key: str, model: str):
+        if api_key != self.api_key:
+            self._client = None
+        self.api_key, self.model = api_key, model
 
     @property
     def client(self) -> genai.Client:
         if self._client is None:
             if not self.api_key:
-                raise ValueError("GEMINI_API_KEY ist nicht gesetzt! Bitte in .env eintragen.")
+                raise ValueError("Kein API-Schlüssel eingetragen. Bitte unter Einstellungen (Tray-Icon) eintragen.")
             self._client = genai.Client(api_key=self.api_key)
         return self._client
 

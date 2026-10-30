@@ -34,8 +34,7 @@ class TestAIService(unittest.TestCase):
 
     def test_missing_key_fails_clearly(self):
         service = AIService(api_key="")
-        service.api_key = ""
-        with self.assertRaisesRegex(ValueError, "GEMINI_API_KEY"):
+        with self.assertRaisesRegex(ValueError, "API-Schlüssel"):
             service.improve_text("Hallo")
 
 

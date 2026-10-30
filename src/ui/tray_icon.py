@@ -29,11 +29,12 @@ def create_mouse_icon() -> QIcon:
 
 class TrayIcon(QSystemTrayIcon):
     trigger_test = Signal()
+    settings_requested = Signal()
     quit_requested = Signal()
 
     def __init__(self, hotkey_display: str = "Strg+Alt+S", parent=None):
         super().__init__(create_mouse_icon(), parent)
-        self.setToolTip(f"SprachMaus – Dein KI-Schreibassistent ({hotkey_display})")
+        self.set_hotkey_display(hotkey_display)
 
         menu = QMenu()
         menu.setStyleSheet("""
@@ -61,9 +62,16 @@ class TrayIcon(QSystemTrayIcon):
         test_action = menu.addAction("Beispielsatz korrigieren")
         test_action.triggered.connect(self.trigger_test.emit)
 
+        settings_action = menu.addAction("Einstellungen …")
+        settings_action.triggered.connect(self.settings_requested.emit)
+
         menu.addSeparator()
         quit_action = menu.addAction("Beenden")
         quit_action.triggered.connect(self.quit_requested.emit)
 
         self.setContextMenu(menu)
+        self.menu = menu  # Referenz halten, sonst räumt Python das Menü weg
+
+    def set_hotkey_display(self, hotkey_display: str):
+        self.setToolTip(f"SprachMaus – Dein KI-Schreibassistent ({hotkey_display})")
 
