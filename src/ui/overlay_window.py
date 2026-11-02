@@ -1,5 +1,5 @@
 from typing import Optional
-from PySide6.QtCore import Qt, Signal, QPoint, QSettings
+from PySide6.QtCore import Qt, Signal, QPoint, QSettings, QTimer
 from PySide6.QtGui import QCursor, QKeyEvent, QMouseEvent
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -7,6 +7,8 @@ from PySide6.QtWidgets import (
     QScrollArea, QSizeGrip
 )
 from src.ai_service import ImprovementResult
+
+PROMPT_HINT = "Taste drücken oder klicken: Text als klaren Prompt für eine KI formulieren"
 
 
 class SuggestionCard(QFrame):
@@ -44,6 +46,7 @@ class SuggestionCard(QFrame):
 
         # Content text
         self.content_lbl = QLabel(text)
+        self.content_lbl.setTextFormat(Qt.TextFormat.PlainText)  # Prompts enthalten oft <Tags>
         self.content_lbl.setWordWrap(True)
         self.content_lbl.setStyleSheet("color: #f8fafc; font-size: 13px; line-height: 1.35;")
         layout.addWidget(self.content_lbl)
@@ -67,6 +70,7 @@ class SuggestionCard(QFrame):
 
 class OverlayWindow(QWidget):
     suggestion_selected = Signal(str)
+    prompt_requested = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -89,6 +93,10 @@ class OverlayWindow(QWidget):
         self.resize(self.user_custom_width, 200)
 
         self.cards: list[SuggestionCard] = []
+        self.prompt_card: Optional[SuggestionCard] = None
+        self.prompt_key = ""
+        self.original_text = ""
+        self._prompt_pending = False
         self._drag_pos: Optional[QPoint] = None
 
         # Main Layout
@@ -124,7 +132,7 @@ class OverlayWindow(QWidget):
         title.setStyleSheet("color: #38bdf8; font-weight: bold; font-size: 13px;")
         title_layout.addWidget(title)
 
-        hint = QLabel("Taste [1-4] oder [Esc] | Größe an Ecke unten rechts anpassbar ↘")
+        hint = QLabel("Taste [1-5] oder [Esc] | Größe an Ecke unten rechts anpassbar ↘")
         hint.setStyleSheet("color: #64748b; font-size: 10px;")
         title_layout.addStretch()
         title_layout.addWidget(hint)
@@ -244,6 +252,8 @@ class OverlayWindow(QWidget):
         ]
         if result.english:
             items.append(("4", "🇬🇧 Englisch", "#fbbf24", result.english))
+        self.prompt_key = str(len(items) + 1)
+        items.append((self.prompt_key, "🤖 Prompt für KI", "#c084fc", PROMPT_HINT))
 
         for key_num, tag, color, text in items:
             card = SuggestionCard(key_num, tag, color, text, self)
@@ -251,18 +261,37 @@ class OverlayWindow(QWidget):
             self.cards.append(card)
             self.suggestions_layout.addWidget(card)
 
+        self.original_text = result.original
+        self.prompt_card = self.cards[-1]
+        self.prompt_card.text_content = ""  # leer = noch nicht erstellt, kostet erst auf Wunsch einen KI-Aufruf
+        self._prompt_pending = False
+
         # Höhe so berechnen, dass alle Karten ohne Scrollbalken Platz haben
         screen = self.screen().availableGeometry()
         cards_height = len(items) * 68 + 140
 
         if self.user_custom_height > 0:
-            target_height = min(self.user_custom_height, screen.height() - 60)
+            # max: gespeicherte Höhen stammen oft noch aus der Zeit mit 4 Karten
+            target_height = min(max(self.user_custom_height, cards_height), screen.height() - 60)
         else:
             # Automatisch alle Karten vollständig anzeigen (ohne Scrollen!)
             target_height = min(cards_height, screen.height() - 80)
 
         self.resize(self.user_custom_width, target_height)
         self._position_smart(target_height=target_height)
+
+    def show_prompt(self, prompt: str):
+        self._prompt_pending = False
+        card = self.prompt_card
+        card.text_content = prompt
+        card.content_lbl.setText(prompt)
+        self.explanation_lbl.setText(f"💡 Prompt fertig: Taste [{self.prompt_key}] oder Klick fügt ihn ein.")
+        # Kurz warten: erst nach dem Layout-Durchlauf ist der Scrollbereich groß genug. Oberkante zeigen, Text beginnt dort
+        QTimer.singleShot(50, lambda: card in self.cards and self.scroll.verticalScrollBar().setValue(card.y()))
+
+    def reset_prompt(self):
+        self._prompt_pending = False
+        self.prompt_card.content_lbl.setText(PROMPT_HINT)
 
     def _position_smart(self, target_height: Optional[int] = None):
         cursor_pos = QCursor.pos()
@@ -294,8 +323,13 @@ class OverlayWindow(QWidget):
         self.move(int(x), int(y))
 
     def _on_card_clicked(self, text: str):
-        self.hide()
-        self.suggestion_selected.emit(text)
+        if text:
+            self.hide()
+            self.suggestion_selected.emit(text)
+        elif not self._prompt_pending:
+            self._prompt_pending = True
+            self.prompt_card.content_lbl.setText("⏳ Prompt wird erstellt ...")
+            self.prompt_requested.emit(self.original_text)
 
     def keyPressEvent(self, event: QKeyEvent):
         key = event.key()

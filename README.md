@@ -15,6 +15,7 @@ Ein smarter Windows-Schreibassistent für Nicht-Muttersprachler. Verbessert E-Ma
   2. `[2]` 👔 **Formell / Büro** (Höflich und professionell für E-Mails an Chefs/Kunden)
   3. `[3]` 💬 **Locker / Chat** (Freundlich für Microsoft Teams, Slack oder WhatsApp)
   4. `[4]` 🇬🇧 **Englisch** (Sofortige Übersetzung)
+  5. `[5]` 🤖 **Prompt für KI** (Formuliert den Text als klare Anweisung für eine KI. Wird erst beim ersten Drücken erstellt, ein zweites Drücken fügt ihn ein.)
 - **Erklärungs-Funktion:** Zeigt kurz an, *warum* etwas geändert wurde (z.B. *"Artikel korrigiert: das Problem statt der Problem, Dativ nach 'mit'"*).
 - **Direktes Ersetzen:** Drücke `1`, `2`, `3`, `4` oder klicke darauf – der markierte Text wird direkt im Zielprogramm (Outlook, Teams, Word, Chrome) ausgetauscht.
 
@@ -37,7 +38,7 @@ Gespeichert wird in `%APPDATA%\SprachMaus\settings.env`. Beim ersten Start ohne 
 2. Markiere einen fehlerhaften Satz, z. B.:
    > *"Ich habe gestern geschickt das E-Mail an der Chef, aber er hat nicht geantwortet."*
 3. Drücke **`Strg + Alt + S`** (oder dein konfiguriertes Kürzel).
-4. Wähle mit Taste `1`, `2`, `3` oder `4` deinen Wunschsatz aus – fertig!
+4. Wähle mit Taste `1`, `2`, `3` oder `4` deinen Wunschsatz aus – fertig! Für einen KI-Prompt: `5` drücken, Ergebnis lesen, nochmal `5`.
 
 ---
 
@@ -48,6 +49,7 @@ Gespeichert wird in `%APPDATA%\SprachMaus\settings.env`. Beim ersten Start ohne 
 ```powershell
 .\.venv\Scripts\python main.py          # aus dem Quellcode starten
 .\.venv\Scripts\python -m pytest -q     # Tests
-.\.venv\Scripts\pyinstaller --noconfirm --onefile --windowed --name SprachMaus --icon assets/sprachmaus.ico --exclude-module PySide6.QtWebEngineCore --exclude-module PySide6.QtWebEngineWidgets --exclude-module PySide6.QtPdf main.py
+.\.venv\Scripts\pyinstaller --noconfirm --onefile --windowed --name SprachMaus --runtime-tmpdir '%LOCALAPPDATA%\SprachMaus\runtime' --icon assets/sprachmaus.ico --exclude-module PySide6.QtWebEngineCore --exclude-module PySide6.QtWebEngineWidgets --exclude-module PySide6.QtPdf main.py
 ```
+`--runtime-tmpdir`: Die Exe entpackt sich beim Start. Im Windows-Temp-Ordner löscht die Speicheroptimierung sonst Dateien der laufenden App (`[Errno 2]` beim KI-Aufruf).
 

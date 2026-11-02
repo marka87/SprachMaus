@@ -15,14 +15,14 @@ class AIWorker(QThread):
     done = Signal(object, object)
     error = Signal(object, str)
 
-    def __init__(self, ai_service: AIService, text: str, parent=None):
+    def __init__(self, task, text: str, parent=None):
         super().__init__(parent)
-        self.ai_service = ai_service
+        self.task = task
         self.text = text
 
     def run(self):
         try:
-            result = self.ai_service.improve_text(self.text)
+            result = self.task(self.text)
             self.done.emit(self, result)
         except Exception as e:
             self.error.emit(self, str(e))
@@ -52,6 +52,7 @@ class SprachMausApp(QObject):
         self.hotkey = HotkeyListener(self.settings["HOTKEY"])
 
         self._current_worker: AIWorker | None = None
+        self._prompt_worker: AIWorker | None = None
 
         # Wire Signals
         self.hotkey.triggered.connect(self._handle_hotkey)
@@ -59,6 +60,7 @@ class SprachMausApp(QObject):
             lambda msg: self.tray.showMessage("Tastenkürzel nicht aktiv", msg, TrayIcon.MessageIcon.Critical, 8000)
         )
         self.overlay.suggestion_selected.connect(self._handle_suggestion_selected)
+        self.overlay.prompt_requested.connect(self._handle_prompt_requested)
         self.tray.trigger_test.connect(self._handle_test_sentence)
         self.tray.settings_requested.connect(self.open_settings)
         self.tray.quit_requested.connect(self._handle_quit)
@@ -112,12 +114,29 @@ class SprachMausApp(QObject):
         self.overlay.show_loading(text)
 
         # Ältere Anfragen laufen zu Ende, ihr Ergebnis wird verworfen (terminate() ist unsicher)
-        worker = AIWorker(self.ai_service, text, self)
-        worker.done.connect(self._on_ai_success)
-        worker.error.connect(self._on_ai_error)
+        self._prompt_worker = None
+        self._current_worker = self._start_worker(self.ai_service.improve_text, text, self._on_ai_success, self._on_ai_error)
+
+    def _handle_prompt_requested(self, text: str):
+        self._prompt_worker = self._start_worker(self.ai_service.write_prompt, text, self._on_prompt_success, self._on_prompt_error)
+
+    def _start_worker(self, task, text: str, on_done, on_error) -> AIWorker:
+        worker = AIWorker(task, text, self)
+        worker.done.connect(on_done)
+        worker.error.connect(on_error)
         worker.finished.connect(worker.deleteLater)
-        self._current_worker = worker
         worker.start()
+        return worker
+
+    def _on_prompt_success(self, worker: AIWorker, prompt: str):
+        if worker is self._prompt_worker:
+            self.overlay.show_prompt(prompt)
+
+    def _on_prompt_error(self, worker: AIWorker, err_msg: str):
+        if worker is not self._prompt_worker:
+            return
+        self.overlay.reset_prompt()  # die fertigen Vorschläge bleiben nutzbar
+        self.tray.showMessage("Fehler beim Prompt", err_msg, TrayIcon.MessageIcon.Critical, 5000)
 
     def _on_ai_success(self, worker: AIWorker, result: ImprovementResult):
         if worker is self._current_worker:
