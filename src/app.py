@@ -64,6 +64,8 @@ class SprachMausApp(QObject):
         self.tray.quit_requested.connect(self._handle_quit)
 
     def start(self):
+        if config.get_autostart():
+            config.set_autostart(True)  # Pfad auffrischen, falls die Exe verschoben wurde oder von A: gestartet ist
         self.tray.show()
         self.hotkey.start()
         self.tray.showMessage(

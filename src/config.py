@@ -36,9 +36,11 @@ def save_settings(settings: dict, config_file: Path = CONFIG_FILE):
 
 
 def _start_command() -> str:
+    # resolve(): subst-/Netzlaufwerke (z. B. A: -> C:\git) gibt es beim Windows-Start noch nicht
+    exe = Path(sys.executable).resolve()
     if getattr(sys, "frozen", False):  # als SprachMaus.exe gebaut
-        return f'"{sys.executable}"'
-    pythonw = Path(sys.executable).with_name("pythonw.exe")
+        return f'"{exe}"'
+    pythonw = exe.with_name("pythonw.exe")
     return f'"{pythonw}" "{BASE_DIR / "main.py"}"'
 
 
